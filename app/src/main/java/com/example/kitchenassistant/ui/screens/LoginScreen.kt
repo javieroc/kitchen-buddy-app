@@ -303,10 +303,19 @@ private fun GlassGradientButton(
 ) {
     val shape = ContinuousRoundedRectangle(50.dp) // full pill
 
+    // Softer, more transparent blue gradient so the glass shows through
     val blueGradient = Brush.horizontalGradient(
         colors = listOf(
-            Color(0xFF82C4F8), // light sky blue
-            Color(0xFF1565C0)  // deep blue
+            Color(0xFF2640E8).copy(alpha = 0.55f), // indigo blue — semi-transparent
+            Color(0xFF1FB4FF).copy(alpha = 0.65f)  // sky blue — semi-transparent
+        )
+    )
+
+    // Separate stronger gradient just for the top specular highlight
+    val highlightGradient = Brush.verticalGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.30f), // bright highlight at top
+            Color.Transparent                // fades out downward
         )
     )
 
@@ -320,21 +329,23 @@ private fun GlassGradientButton(
                 backdrop = backdrop,
                 shape = { shape },
                 effects = {
-                    blur(12.dp.toPx())
+                    blur(4.dp.toPx())            // low blur — keeps background visible
                     vibrancy()
                     lens(
-                        refractionHeight = 8.dp.toPx(),
-                        refractionAmount = 14.dp.toPx(),
+                        refractionHeight = 20.dp.toPx(), // thick glass lens depth
+                        refractionAmount = 32.dp.toPx(), // strong refraction for depth
                         chromaticAberration = true
                     )
                 },
                 onDrawSurface = {
-                    // Blue gradient tint over the glass
-                    drawRect(brush = blueGradient, alpha = 0.82f)
-                    // White glass border
+                    // Semi-transparent blue tint — lets the glass show through
+                    drawRect(brush = blueGradient)
+                    // Top specular highlight — the key to making it look like real glass
+                    drawRect(brush = highlightGradient)
+                    // Bright white border for glass edge definition
                     drawRect(
-                        color = Color.White.copy(alpha = 0.40f),
-                        style = Stroke(width = 1.dp.toPx())
+                        color = Color.White.copy(alpha = 0.55f),
+                        style = Stroke(width = 1.2.dp.toPx())
                     )
                 }
             )
@@ -344,10 +355,6 @@ private fun GlassGradientButton(
             ) { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        // Reinforce the gradient visually on top of the glass layer
-        Canvas(modifier = Modifier.matchParentSize()) {
-            drawRect(brush = blueGradient, alpha = 0.45f)
-        }
         Text(
             text = text,
             color = Color.White,
