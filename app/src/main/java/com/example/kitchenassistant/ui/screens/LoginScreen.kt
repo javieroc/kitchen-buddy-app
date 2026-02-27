@@ -183,7 +183,7 @@ private fun GlassCard(
     backdrop: LayerBackdrop,
     content: @Composable () -> Unit
 ) {
-    val shape = ContinuousRoundedRectangle(32.dp)
+    val shape = ContinuousRoundedRectangle(20.dp) // reduced from 32.dp
 
     Box(
         modifier = Modifier
@@ -194,18 +194,18 @@ private fun GlassCard(
                 shape = { shape },
                 effects = {
                     vibrancy()
-                    blur(24.dp.toPx())
+                    blur(1.dp.toPx())
                     lens(
-                        refractionHeight = 18.dp.toPx(),
-                        refractionAmount = 28.dp.toPx(),
+                        refractionHeight = 28.dp.toPx(),
+                        refractionAmount = 40.dp.toPx(),
                         chromaticAberration = true
                     )
                 },
                 onDrawSurface = {
-                    drawRect(Color.White.copy(alpha = 0.10f))
+                    drawRect(Color.White.copy(alpha = 0.18f))
                     drawRect(
-                        color = Color.White.copy(alpha = 0.30f),
-                        style = Stroke(width = 1.dp.toPx())
+                        color = Color.White.copy(alpha = 0.45f),
+                        style = Stroke(width = 1.5.dp.toPx())
                     )
                 }
             )
