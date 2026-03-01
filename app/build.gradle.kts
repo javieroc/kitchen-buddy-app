@@ -59,4 +59,7 @@ dependencies {
     // Liquid glass lib
     implementation("io.github.kyant0:backdrop:1.0.6")
     implementation("io.github.kyant0:capsule:2.1.3")
+
+    // Icons
+    implementation("androidx.compose.material:material-icons-extended")
 }
