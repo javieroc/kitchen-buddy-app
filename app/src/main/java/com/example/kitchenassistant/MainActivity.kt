@@ -18,13 +18,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             KitchenAssistantTheme {
-                var isLoggedIn by remember { mutableStateOf(false) }
+                var accessToken by remember { mutableStateOf<String?>(null) }
 
-                if (isLoggedIn) {
+                if (accessToken != null) {
                     HomeScreen()
                 } else {
                     LoginScreen(
-                        onLoginClick = { _, _ -> isLoggedIn = true }
+                        onLoginSuccess = { token ->
+                            accessToken = token
+                            // token is a Supabase JWT — attach it as
+                            // Authorization: Bearer <token> on your backend requests
+                        }
                     )
                 }
             }

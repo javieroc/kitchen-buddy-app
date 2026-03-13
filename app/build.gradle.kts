@@ -1,6 +1,14 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+}
+
+// Read local.properties from the project root
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) load(file.inputStream())
 }
 
 android {
@@ -19,6 +27,18 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Inject as BuildConfig constants — available at runtime
+        buildConfigField(
+            "String",
+            "SUPABASE_URL",
+            "\"${localProperties["SUPABASE_URL"] ?: ""}\""
+        )
+        buildConfigField(
+            "String",
+            "SUPABASE_KEY",
+            "\"${localProperties["SUPABASE_KEY"] ?: ""}\""
+        )
     }
 
     buildTypes {
@@ -36,6 +56,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -62,4 +83,16 @@ dependencies {
 
     // Icons
     implementation("androidx.compose.material:material-icons-extended")
+
+    // Supabase BOM — controls all module versions in sync
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.1.4"))
+    implementation("io.github.jan-tennert.supabase:auth-kt") // auth only — no postgrest needed
+
+    // Ktor Android engine — required by the Supabase SDK for HTTP
+    implementation("io.ktor:ktor-client-android:3.1.3")
+
+    // ViewModel + Compose lifecycle integration
+    val lifecycle_version = "2.10.0"
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${lifecycle_version}")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:${lifecycle_version}")
 }

@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.kitchenassistant.R
 import com.example.kitchenassistant.ui.components.GlassCard
 import com.example.kitchenassistant.ui.components.GlassGradientButton
@@ -38,12 +42,24 @@ import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 
 @Composable
 fun LoginScreen(
-    onLoginClick: (email: String, password: String) -> Unit = { _, _ -> },
+    onLoginSuccess: (accessToken: String) -> Unit = {},
     onForgotPasswordClick: () -> Unit = {},
-    onSignUpClick: () -> Unit = {}
+    onSignUpClick: () -> Unit = {},
+    viewModel: LoginViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isLoading = uiState is LoginUiState.Loading
+    val errorMessage = (uiState as? LoginUiState.Error)?.message
+
+    // Navigate as soon as we get a token — fires exactly once
+    LaunchedEffect(uiState) {
+        if (uiState is LoginUiState.Success) {
+            onLoginSuccess((uiState as LoginUiState.Success).accessToken)
+        }
+    }
 
     val backdrop = rememberLayerBackdrop()
 
@@ -80,24 +96,43 @@ fun LoginScreen(
 
                     GlassInputField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            viewModel.clearError()
+                        },
                         placeholder = "Enter your email...",
                         icon = Icons.Default.Email,
                         keyboardType = KeyboardType.Email,
-                        backdrop = backdrop
+                        backdrop = backdrop,
+                        enabled = !isLoading
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
 
                     GlassInputField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            viewModel.clearError()
+                        },
                         placeholder = "Enter your password...",
                         icon = Icons.Default.Lock,
                         keyboardType = KeyboardType.Password,
                         isPassword = true,
-                        backdrop = backdrop
+                        backdrop = backdrop,
+                        enabled = !isLoading
                     )
+
+                    // Inline error — shown below the fields
+                    if (errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = errorMessage,
+                            color = Color(0xFFFF6B6B),
+                            fontSize = 13.sp,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
 
                     Box(
                         modifier = Modifier
@@ -105,7 +140,10 @@ fun LoginScreen(
                             .padding(top = 2.dp),
                         contentAlignment = Alignment.CenterEnd
                     ) {
-                        TextButton(onClick = onForgotPasswordClick) {
+                        TextButton(
+                            onClick = onForgotPasswordClick,
+                            enabled = !isLoading
+                        ) {
                             Text(
                                 text = "Forgot Password?",
                                 color = Color.White.copy(alpha = 0.85f),
@@ -116,11 +154,26 @@ fun LoginScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    GlassGradientButton(
-                        text = "Log In",
-                        backdrop = backdrop,
-                        onClick = { onLoginClick(email, password) }
-                    )
+                    // Button swaps to a spinner during the network request
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                    } else {
+                        GlassGradientButton(
+                            text = "Log In",
+                            backdrop = backdrop,
+                            onClick = { viewModel.signIn(email, password) }
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(20.dp))
 
@@ -133,7 +186,10 @@ fun LoginScreen(
                             color = Color.White.copy(alpha = 0.75f),
                             fontSize = 14.sp
                         )
-                        TextButton(onClick = onSignUpClick) {
+                        TextButton(
+                            onClick = onSignUpClick,
+                            enabled = !isLoading
+                        ) {
                             Text(
                                 text = "Sign Up",
                                 color = Color.White,
