@@ -1,5 +1,7 @@
 package com.example.kitchenassistant.ui.components
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -9,9 +11,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,6 +53,15 @@ fun GlassInputField(
 ) {
     val shape = ContinuousRoundedRectangle(16.dp)
 
+    // Only created when isPassword = true, ignored otherwise
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    val visualTransformation = when {
+        !isPassword -> VisualTransformation.None
+        passwordVisible -> VisualTransformation.None
+        else -> PasswordVisualTransformation()
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -72,17 +90,20 @@ fun GlassInputField(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Leading icon (email, lock, etc.)
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Color.White.copy(alpha = if (enabled) 1f else 0.5f),
                 modifier = Modifier.size(20.dp)
             )
+
+            // Text field — weight(1f) so the eye icon has room on the right
             BasicTextField(
                 value = value,
                 onValueChange = onValueChange,
                 enabled = enabled,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 singleLine = true,
                 textStyle = TextStyle(
                     color = Color.White,
@@ -90,7 +111,7 @@ fun GlassInputField(
                 ),
                 cursorBrush = SolidColor(Color.White),
                 keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+                visualTransformation = visualTransformation,
                 decorationBox = { innerTextField ->
                     Box {
                         if (value.isEmpty()) {
@@ -104,6 +125,23 @@ fun GlassInputField(
                     }
                 }
             )
+
+            // Trailing eye icon — only shown for password fields
+            if (isPassword) {
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Default.Visibility
+                    else Icons.Default.VisibilityOff,
+                    contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                    tint = Color.White.copy(alpha = if (enabled) 0.70f else 0.30f),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable(
+                            enabled = enabled,
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { passwordVisible = !passwordVisible }
+                )
+            }
         }
     }
 }
