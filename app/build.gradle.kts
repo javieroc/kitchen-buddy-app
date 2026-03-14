@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 // Read local.properties from the project root
@@ -95,4 +96,10 @@ dependencies {
     val lifecycle_version = "2.10.0"
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${lifecycle_version}")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:${lifecycle_version}")
+
+    val nav_version = "2.9.7"
+    implementation("androidx.navigation:navigation-compose:${nav_version}")
+
+    // JSON serialization library, works with the Kotlin serialization plugin
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 }

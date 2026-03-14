@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.kitchenassistant.data.supabase
-import com.example.kitchenassistant.ui.screens.HomeScreen
+import com.example.kitchenassistant.ui.navigation.AppShell
 import com.example.kitchenassistant.ui.screens.LoginScreen
 import com.example.kitchenassistant.ui.theme.KitchenAssistantTheme
 import io.github.jan.supabase.auth.auth
@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
                     }
 
                     is SessionStatus.Authenticated -> {
-                        HomeScreen()
+                        AppShell()
                     }
 
                     is SessionStatus.NotAuthenticated,

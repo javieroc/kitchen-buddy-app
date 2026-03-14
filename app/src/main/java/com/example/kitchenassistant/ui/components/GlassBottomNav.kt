@@ -25,6 +25,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +35,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.kitchenassistant.ui.navigation.AppRoute
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.drawBackdrop
 import com.kyant.backdrop.effects.blur
@@ -44,24 +51,27 @@ import com.kyant.capsule.ContinuousCapsule
 data class NavTab(
     val label: String,
     val icon: ImageVector,
-    val selectedIcon: ImageVector
+    val selectedIcon: ImageVector,
+    val route: AppRoute
 )
 
 val defaultNavTabs = listOf(
-    NavTab("Chat",     Icons.Outlined.Chat,     Icons.Filled.Chat),
-    NavTab("Recipes",  Icons.Outlined.Book,     Icons.Outlined.Book),
-    NavTab("Tools",    Icons.Outlined.Tune,     Icons.Outlined.Tune),
-    NavTab("Settings", Icons.Outlined.Settings, Icons.Filled.Settings),
+    NavTab("Chat",     Icons.Outlined.Chat,     Icons.Filled.Chat,     AppRoute.Chat),
+    NavTab("Recipes",  Icons.Outlined.Book,     Icons.Outlined.Book,   AppRoute.Recipes),
+    NavTab("Tools",    Icons.Outlined.Tune,     Icons.Outlined.Tune,   AppRoute.Tools),
+    NavTab("Settings", Icons.Outlined.Settings, Icons.Filled.Settings, AppRoute.Settings),
 )
 
 @Composable
 fun GlassBottomNav(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit,
+    navController: NavController,
     backdrop: LayerBackdrop,
     modifier: Modifier = Modifier,
     tabs: List<NavTab> = defaultNavTabs
 ) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -96,11 +106,23 @@ fun GlassBottomNav(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            tabs.forEachIndexed { index, tab ->
+            tabs.forEach { tab ->
+                val isSelected = currentDestination?.hierarchy?.any {
+                    it.hasRoute(tab.route::class)
+                } == true
+
                 NavTabItem(
                     tab = tab,
-                    isSelected = selectedTab == index,
-                    onClick = { onTabSelected(index) }
+                    isSelected = isSelected,
+                    onClick = {
+                        navController.navigate(tab.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
                 )
             }
         }
