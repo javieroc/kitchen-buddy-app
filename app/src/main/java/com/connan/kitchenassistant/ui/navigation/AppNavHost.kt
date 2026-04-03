@@ -1,5 +1,7 @@
 package com.connan.kitchenassistant.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
@@ -20,7 +22,11 @@ fun AppNavHost(
     NavHost(
         navController = navController,
         startDestination = AppRoute.Chat,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         composable<AppRoute.Chat> {
             HomeScreen(backdrop = backdrop)

@@ -35,8 +35,7 @@ class LoginViewModel(
                 val token = authRepository.signIn(email, password)
                 LoginUiState.Success(token)
             } catch (e: RestException) {
-                // Supabase returns structured errors — message is user-friendly
-                LoginUiState.Error(e.message ?: "Invalid email or password")
+                LoginUiState.Error("Invalid email or password")
             } catch (e: Exception) {
                 // Network errors, timeouts, etc.
                 LoginUiState.Error("Connection error. Please check your internet and try again.")

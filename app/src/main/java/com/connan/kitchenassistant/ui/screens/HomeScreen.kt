@@ -16,6 +16,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,7 +32,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.connan.kitchenassistant.ui.components.ChatBubble
 import com.connan.kitchenassistant.ui.components.GlassInputBar
-import com.connan.kitchenassistant.ui.components.GlassMicButton
 import com.kyant.backdrop.backdrops.LayerBackdrop
 
 @Composable
@@ -43,9 +43,35 @@ fun HomeScreen(
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
 
-    LaunchedEffect(uiState.messages.size) {
-        if (uiState.messages.isNotEmpty()) {
-            listState.animateScrollToItem(uiState.messages.size - 1)
+    // With reverseLayout=true, item 0 is at the visual bottom (newest message).
+    // The list starts there naturally — no explicit "scroll to bottom" needed on init.
+    // Only emit scrollToBottom when the user sends a message while scrolled up.
+    LaunchedEffect(Unit) {
+        viewModel.scrollToBottom.collect {
+            listState.animateScrollToItem(0)
+        }
+    }
+
+    // Load older messages when the user scrolls to the visual top (oldest visible item).
+    // hasScrolledUp guards against firing on initial render before any scroll has occurred.
+    var hasScrolledUp by remember { mutableStateOf(false) }
+
+    LaunchedEffect(listState.firstVisibleItemIndex) {
+        if (listState.firstVisibleItemIndex > 0) hasScrolledUp = true
+    }
+
+    val atVisualTop by remember {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            val lastVisible = info.visibleItemsInfo.lastOrNull()?.index ?: -1
+            lastVisible >= info.totalItemsCount - 1 && info.totalItemsCount > 0
+        }
+    }
+
+    LaunchedEffect(atVisualTop) {
+        if (atVisualTop && hasScrolledUp && uiState.hasMoreMessages) {
+            hasScrolledUp = false
+            viewModel.loadMore()
         }
     }
 
@@ -90,18 +116,16 @@ fun HomeScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
+                    reverseLayout = true,
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        top = 56.dp,
-                        bottom = 140.dp
+                        top = 140.dp,  // top/bottom swapped because of reverseLayout
+                        bottom = 56.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(uiState.messages) { message ->
-                        ChatBubble(message = message, backdrop = backdrop)
-                    }
-
+                    // Declared first → appears at the visual bottom (typing indicator)
                     if (uiState.isLoading) {
                         item {
                             Box(
@@ -116,6 +140,11 @@ fun HomeScreen(
                                 )
                             }
                         }
+                    }
+
+                    // Reversed so index 0 = newest → sits at the visual bottom
+                    items(uiState.messages.reversed()) { message ->
+                        ChatBubble(message = message, backdrop = backdrop)
                     }
                 }
             }
@@ -132,18 +161,6 @@ fun HomeScreen(
                     color = Color(0xFFFF6B6B),
                     fontSize = 13.sp,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                GlassMicButton(
-                    backdrop = backdrop,
-                    onClick = { /* handle voice */ }
                 )
             }
 

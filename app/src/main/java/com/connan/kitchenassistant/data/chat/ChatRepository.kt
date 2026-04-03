@@ -1,7 +1,6 @@
 package com.connan.kitchenassistant.data.chat
 
 import com.connan.kitchenassistant.data.supabase
-import com.connan.kitchenassistant.ui.components.ChatMessage
 import io.github.jan.supabase.auth.auth
 
 class ChatRepository {
@@ -13,26 +12,30 @@ class ChatRepository {
         return "Bearer $token"
     }
 
-    suspend fun getOrCreateThread(): ChatThread {
+    suspend fun getOrCreateThreadId(): String {
+        chatCache.threadId?.let { return it }
         val token = bearerToken()
         val threads = api.listThreads(token)
-        return if (threads.isNotEmpty()) threads.first()
-        else api.createThread(token, CreateChatRequest())
+        val thread = if (threads.isNotEmpty()) threads.first()
+                     else api.createThread(token, CreateChatRequest())
+        chatCache.threadId = thread.id
+        return thread.id
     }
 
-    suspend fun loadHistory(threadId: String): List<ChatMessage> {
+    suspend fun loadHistory(threadId: String): List<ApiChatMessage> {
         val result = api.getThread(bearerToken(), threadId)
-        return result.messages.map { msg ->
-            ChatMessage(text = msg.content, isFromUser = msg.role == "user")
-        }
+        chatCache.saveMessages(result.messages)
+        return result.messages
     }
 
-    suspend fun sendThreadMessage(threadId: String, message: String): ChatMessage {
+    suspend fun sendThreadMessage(threadId: String, message: String): ApiChatMessage {
         val response = api.sendThreadMessage(
             token = bearerToken(),
             chatId = threadId,
             request = SendMessageRequest(message)
         )
-        return ChatMessage(text = response.assistantMessage.content, isFromUser = false)
+        val updated = chatCache.getMessages() + response.userMessage + response.assistantMessage
+        chatCache.saveMessages(updated)
+        return response.assistantMessage
     }
 }

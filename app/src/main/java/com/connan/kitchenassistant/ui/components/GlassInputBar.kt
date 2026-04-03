@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -125,11 +126,11 @@ fun GlassInputBar(
                     .clickable(
                         interactionSource = sendInteraction,
                         indication = ripple(bounded = true, color = Color.White)
-                    ) { onSend() }
+                    ) { if (value.isNotBlank()) onSend() }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Send,
-                    contentDescription = "Send",
+                    imageVector = if (value.isBlank()) Icons.Outlined.Mic else Icons.Default.Send,
+                    contentDescription = if (value.isBlank()) "Voice input" else "Send",
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)
                 )
