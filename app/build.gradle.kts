@@ -13,7 +13,7 @@ val localProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.example.kitchenassistant"
+    namespace = "com.connan.kitchenassistant"
     compileSdk {
         version = release(36) {
             minorApiLevel = 1
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.kitchenassistant"
+        applicationId = "com.connan.kitchenassistant"
         minSdk = 31
         targetSdk = 36
         versionCode = 1
