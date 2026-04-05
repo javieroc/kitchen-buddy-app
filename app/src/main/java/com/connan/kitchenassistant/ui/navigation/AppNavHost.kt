@@ -32,7 +32,7 @@ fun AppNavHost(
             HomeScreen(backdrop = backdrop)
         }
         composable<AppRoute.Recipes> {
-            RecipesScreen()
+            RecipesScreen(backdrop = backdrop)
         }
         composable<AppRoute.Tools> {
             ToolsScreen()

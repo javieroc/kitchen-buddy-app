@@ -7,13 +7,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.connan.kitchenassistant.R
 import com.connan.kitchenassistant.ui.components.GlassBottomNav
+import com.connan.kitchenassistant.ui.components.GlassTopBar
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 
@@ -21,6 +26,27 @@ import com.kyant.backdrop.backdrops.rememberLayerBackdrop
 fun AppShell() {
     val navController = rememberNavController()
     val backdrop = rememberLayerBackdrop()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val canNavigateBack = navController.previousBackStackEntry != null
+
+    val buddyName = remember {
+        listOf(
+            "Mr. Burrito",
+            "Cheffy",
+            "Don Steak",
+            "Chuby Bobby",
+            "Señor Taco",
+            "Grill Master G",
+            "Chef Noodle"
+        ).random()
+    }
+
+    val title = when {
+        navBackStackEntry?.destination?.hasRoute(AppRoute.Recipes::class) == true -> "Recipes"
+        navBackStackEntry?.destination?.hasRoute(AppRoute.Tools::class) == true -> "Tools"
+        navBackStackEntry?.destination?.hasRoute(AppRoute.Settings::class) == true -> "Settings"
+        else -> buddyName
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -44,6 +70,14 @@ fun AppShell() {
             // Scaffold background must be transparent so our
             // kitchen_bg image behind it shows through
             containerColor = Color.Transparent,
+            topBar = {
+                GlassTopBar(
+                    title = title,
+                    backdrop = backdrop,
+                    canNavigateBack = canNavigateBack,
+                    onNavigateBack = { navController.navigateUp() }
+                )
+            },
             bottomBar = {
                 GlassBottomNav(
                     navController = navController,

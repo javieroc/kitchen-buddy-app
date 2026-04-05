@@ -1,5 +1,6 @@
 package com.connan.kitchenassistant.data.chat
 
+import com.connan.kitchenassistant.data.recipes.RecipeApiService
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -16,12 +17,19 @@ object RetrofitClient {
         .addInterceptor(loggingInterceptor)
         .build()
 
-    val chatApiService: ChatApiService by lazy {
+    private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-            .create(ChatApiService::class.java)
+    }
+
+    val chatApiService: ChatApiService by lazy {
+        retrofit.create(ChatApiService::class.java)
+    }
+
+    val recipeApiService: RecipeApiService by lazy {
+        retrofit.create(RecipeApiService::class.java)
     }
 }
