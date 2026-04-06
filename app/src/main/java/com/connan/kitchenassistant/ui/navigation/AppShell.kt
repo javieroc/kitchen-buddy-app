@@ -27,7 +27,15 @@ fun AppShell() {
     val navController = rememberNavController()
     val backdrop = rememberLayerBackdrop()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val canNavigateBack = navController.previousBackStackEntry != null
+
+    val isTopLevelDestination = navBackStackEntry?.destination?.let { dest ->
+        dest.hasRoute(AppRoute.Chat::class) ||
+        dest.hasRoute(AppRoute.Recipes::class) ||
+        dest.hasRoute(AppRoute.Tools::class) ||
+        dest.hasRoute(AppRoute.Settings::class)
+    } ?: true
+
+    val canNavigateBack = !isTopLevelDestination && navController.previousBackStackEntry != null
 
     val buddyName = remember {
         listOf(

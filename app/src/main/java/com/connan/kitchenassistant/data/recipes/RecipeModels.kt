@@ -6,6 +6,8 @@ data class RecipeDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
     @SerializedName("description") val description: String?,
+    @SerializedName("category") val category: String?,
+    @SerializedName("image_url") val imageUrl: String?,
     @SerializedName("owner_id") val ownerId: String,
     @SerializedName("created_at") val createdAt: String
 )
@@ -24,4 +26,10 @@ data class RecipeIngredientDto(
 data class RecipeWithIngredientsDto(
     @SerializedName("recipe") val recipe: RecipeDto,
     @SerializedName("ingredients") val ingredients: List<RecipeIngredientDto> = emptyList()
+)
+
+data class RecipesPageDto(
+    @SerializedName("items") val items: List<RecipeWithIngredientsDto>,
+    @SerializedName("has_more") val hasMore: Boolean,
+    @SerializedName("next_cursor") val nextCursor: String?
 )

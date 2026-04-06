@@ -3,30 +3,40 @@ package com.connan.kitchenassistant.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.connan.kitchenassistant.data.recipes.RecipeIngredientDto
 import com.connan.kitchenassistant.data.recipes.RecipeWithIngredientsDto
 import com.kyant.backdrop.backdrops.LayerBackdrop
@@ -35,6 +45,8 @@ import com.kyant.backdrop.effects.blur
 import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.capsule.ContinuousRoundedRectangle
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun RecipesScreen(
@@ -79,7 +91,17 @@ fun RecipesScreen(
             }
 
             else -> {
+                val listState = rememberLazyListState()
+
+                LaunchedEffect(listState) {
+                    snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+                        .map { it == listState.layoutInfo.totalItemsCount - 1 }
+                        .distinctUntilChanged()
+                        .collect { atEnd -> if (atEnd) viewModel.loadMore() }
+                }
+
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(vertical = 16.dp)
@@ -87,12 +109,30 @@ fun RecipesScreen(
                     items(uiState.recipes, key = { it.recipe.id }) { item ->
                         RecipeCard(item = item, backdrop = backdrop)
                     }
+
+                    if (uiState.isLoadingMore) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RecipeCard(
     item: RecipeWithIngredientsDto,
@@ -123,28 +163,66 @@ private fun RecipeCard(
                         style = Stroke(width = 1.dp.toPx())
                     )
                 }
-            )
-            .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            ),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        Text(
-            text = item.recipe.name,
-            color = Color.White,
-            fontSize = 17.sp,
-            fontWeight = FontWeight.SemiBold
-        )
-
-        if (!item.recipe.description.isNullOrBlank()) {
-            Text(
-                text = item.recipe.description,
-                color = Color.White.copy(alpha = 0.75f),
-                fontSize = 13.sp,
-                lineHeight = 18.sp
+        if (!item.recipe.imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = item.recipe.imageUrl,
+                contentDescription = item.recipe.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 18.dp,
+                            topEnd = 18.dp,
+                            bottomStart = 0.dp,
+                            bottomEnd = 0.dp
+                        )
+                    )
             )
         }
 
-        item.ingredients.forEach { ingredient ->
-            IngredientBadge(ingredient)
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (!item.recipe.category.isNullOrBlank()) {
+                Text(
+                    text = item.recipe.category.uppercase(),
+                    color = Color(0xFF1FB4FF).copy(alpha = 0.85f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+            }
+
+            Text(
+                text = item.recipe.name,
+                color = Color.White,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            if (!item.recipe.description.isNullOrBlank()) {
+                Text(
+                    text = item.recipe.description,
+                    color = Color.White.copy(alpha = 0.75f),
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp
+                )
+            }
+
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                item.ingredients.forEach { ingredient ->
+                    IngredientBadge(ingredient)
+                }
+            }
         }
     }
 }

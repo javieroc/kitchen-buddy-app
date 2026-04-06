@@ -13,6 +13,8 @@ class RecipeRepository {
         return "Bearer $token"
     }
 
-    suspend fun listRecipes(): List<RecipeWithIngredientsDto> =
-        api.listRecipes(bearerToken())
+    suspend fun listRecipes(): RecipesPageDto {
+        val items = api.listRecipes(bearerToken())
+        return RecipesPageDto(items = items, hasMore = false, nextCursor = null)
+    }
 }

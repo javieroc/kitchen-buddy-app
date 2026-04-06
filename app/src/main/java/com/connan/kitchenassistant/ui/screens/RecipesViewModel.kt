@@ -13,7 +13,10 @@ import kotlinx.coroutines.launch
 data class RecipesUiState(
     val recipes: List<RecipeWithIngredientsDto> = emptyList(),
     val isLoading: Boolean = true,
-    val error: String? = null
+    val isLoadingMore: Boolean = false,
+    val hasMore: Boolean = false,
+    val error: String? = null,
+    val nextCursor: String? = null
 )
 
 class RecipesViewModel(
@@ -31,10 +34,38 @@ class RecipesViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
-                val recipes = repository.listRecipes()
-                _uiState.update { it.copy(recipes = recipes, isLoading = false) }
+                val page = repository.listRecipes()
+                _uiState.update {
+                    it.copy(
+                        recipes = page.items,
+                        hasMore = page.hasMore,
+                        nextCursor = page.nextCursor,
+                        isLoading = false
+                    )
+                }
             } catch (e: Exception) {
                 _uiState.update { it.copy(isLoading = false, error = "Could not load recipes.") }
+            }
+        }
+    }
+
+    fun loadMore() {
+        val state = _uiState.value
+        if (!state.hasMore || state.isLoadingMore || state.nextCursor == null) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingMore = true) }
+            try {
+                val page = repository.listRecipes()
+                _uiState.update {
+                    it.copy(
+                        recipes = it.recipes + page.items,
+                        hasMore = page.hasMore,
+                        nextCursor = page.nextCursor,
+                        isLoadingMore = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoadingMore = false) }
             }
         }
     }
