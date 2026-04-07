@@ -1,5 +1,6 @@
 package com.connan.kitchenassistant.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,7 @@ import kotlinx.coroutines.flow.map
 @Composable
 fun RecipesScreen(
     backdrop: LayerBackdrop,
+    onNavigateToDetail: (RecipeWithIngredientsDto) -> Unit,
     viewModel: RecipesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -107,7 +109,11 @@ fun RecipesScreen(
                     contentPadding = PaddingValues(vertical = 16.dp)
                 ) {
                     items(uiState.recipes, key = { it.recipe.id }) { item ->
-                        RecipeCard(item = item, backdrop = backdrop)
+                        RecipeCard(
+                            item = item,
+                            backdrop = backdrop,
+                            onClick = { onNavigateToDetail(item) }
+                        )
                     }
 
                     if (uiState.isLoadingMore) {
@@ -136,7 +142,8 @@ fun RecipesScreen(
 @Composable
 private fun RecipeCard(
     item: RecipeWithIngredientsDto,
-    backdrop: LayerBackdrop
+    backdrop: LayerBackdrop,
+    onClick: () -> Unit
 ) {
     val shape = ContinuousRoundedRectangle(18.dp)
 
@@ -144,6 +151,7 @@ private fun RecipeCard(
         modifier = Modifier
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
+            .clickable(onClick = onClick)
             .drawBackdrop(
                 backdrop = backdrop,
                 shape = { shape },

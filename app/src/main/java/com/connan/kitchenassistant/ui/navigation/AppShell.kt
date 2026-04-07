@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.connan.kitchenassistant.R
 import com.connan.kitchenassistant.ui.components.GlassBottomNav
 import com.connan.kitchenassistant.ui.components.GlassTopBar
@@ -37,6 +38,8 @@ fun AppShell() {
 
     val canNavigateBack = !isTopLevelDestination && navController.previousBackStackEntry != null
 
+    val isDetailScreen = navBackStackEntry?.destination?.hasRoute(AppRoute.RecipeDetail::class) == true
+
     val buddyName = remember {
         listOf(
             "Mr. Burrito",
@@ -50,6 +53,7 @@ fun AppShell() {
     }
 
     val title = when {
+        isDetailScreen -> navBackStackEntry?.toRoute<AppRoute.RecipeDetail>()?.recipeName ?: "Recipe"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Recipes::class) == true -> "Recipes"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Tools::class) == true -> "Tools"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Settings::class) == true -> "Settings"
@@ -87,10 +91,12 @@ fun AppShell() {
                 )
             },
             bottomBar = {
-                GlassBottomNav(
-                    navController = navController,
-                    backdrop = backdrop
-                )
+                if (isTopLevelDestination) {
+                    GlassBottomNav(
+                        navController = navController,
+                        backdrop = backdrop
+                    )
+                }
             }
         ) { innerPadding ->
             AppNavHost(
