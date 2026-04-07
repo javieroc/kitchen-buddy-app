@@ -6,6 +6,7 @@ import com.connan.kitchenassistant.data.chat.ApiChatMessage
 import com.connan.kitchenassistant.data.chat.ChatRepository
 import com.connan.kitchenassistant.data.chat.chatCache
 import com.connan.kitchenassistant.ui.components.ChatMessage
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -113,9 +114,11 @@ class HomeViewModel(
     private fun refreshDisplayed() {
         val total = allMessages.size
         val from = maxOf(0, total - shownCount)
+        // Reversed so newest is at index 0 — matches reverseLayout=true in LazyColumn
+        // (index 0 → visual bottom). Doing it here avoids reversing on every recomposition.
         _uiState.update {
             it.copy(
-                messages = allMessages.subList(from, total),
+                messages = allMessages.subList(from, total).reversed(),
                 hasMoreMessages = from > 0
             )
         }
@@ -125,7 +128,7 @@ class HomeViewModel(
         if (text.isBlank()) return
         val currentThreadId = threadId ?: return
 
-        val userMsg = ChatMessage(text = text, isFromUser = true)
+        val userMsg = ChatMessage(id = UUID.randomUUID().toString(), text = text, isFromUser = true)
         allMessages = allMessages + userMsg
         shownCount++
         refreshDisplayed()
@@ -156,6 +159,7 @@ class HomeViewModel(
 }
 
 private fun ApiChatMessage.toUiMessage() = ChatMessage(
+    id = id,
     text = content,
     isFromUser = role == "user"
 )

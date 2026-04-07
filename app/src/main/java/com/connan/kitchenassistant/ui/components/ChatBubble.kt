@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -19,7 +20,11 @@ import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.capsule.ContinuousRoundedRectangle
 
-data class ChatMessage(val text: String, val isFromUser: Boolean)
+data class ChatMessage(
+    val id: String,
+    val text: String,
+    val isFromUser: Boolean
+)
 
 @Composable
 fun ChatBubble(
@@ -27,7 +32,7 @@ fun ChatBubble(
     backdrop: LayerBackdrop,
     modifier: Modifier = Modifier
 ) {
-    val bubbleShape = ContinuousRoundedRectangle(18.dp)
+    val bubbleShape = remember { ContinuousRoundedRectangle(18.dp) }
     val isUser = message.isFromUser
 
     val tintColor   = if (isUser) Color(0xFF2640E8).copy(alpha = 0.55f) else Color.White.copy(alpha = 0.12f)
@@ -59,12 +64,19 @@ fun ChatBubble(
                 )
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
-            Text(
-                text = message.text,
-                color = Color.White,
-                fontSize = 14.sp,
-                lineHeight = 20.sp
-            )
+            if (isUser) {
+                Text(
+                    text = message.text,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp
+                )
+            } else {
+                MarkdownText(
+                    markdown = message.text,
+                    color = Color.White
+                )
+            }
         }
     }
 }

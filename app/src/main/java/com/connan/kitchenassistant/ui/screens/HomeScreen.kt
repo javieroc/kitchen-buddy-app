@@ -142,8 +142,8 @@ fun HomeScreen(
                         }
                     }
 
-                    // Reversed so index 0 = newest → sits at the visual bottom
-                    items(uiState.messages.reversed()) { message ->
+                    // index 0 = newest (already reversed in ViewModel) → visual bottom with reverseLayout=true
+                    items(uiState.messages, key = { it.id }) { message ->
                         ChatBubble(message = message, backdrop = backdrop)
                     }
                 }
