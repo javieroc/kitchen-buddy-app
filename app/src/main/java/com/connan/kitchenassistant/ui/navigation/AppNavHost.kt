@@ -76,7 +76,7 @@ fun AppNavHost(
             ConverterScreen(backdrop = backdrop)
         }
         composable<AppRoute.Settings> {
-            SettingsScreen()
+            SettingsScreen(backdrop = backdrop)
         }
     }
 }
