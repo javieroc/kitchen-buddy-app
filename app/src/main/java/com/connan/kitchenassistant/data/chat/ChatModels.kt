@@ -49,3 +49,10 @@ data class SendMessageResponse(
     @SerializedName("user_message") val userMessage: ApiChatMessage,
     @SerializedName("assistant_message") val assistantMessage: ApiChatMessage
 )
+
+data class VoiceMessageResponse(
+    @SerializedName("transcription") val transcription: String,
+    @SerializedName("thread") val thread: ChatThread,
+    @SerializedName("user_message") val userMessage: ApiChatMessage,
+    @SerializedName("assistant_message") val assistantMessage: ApiChatMessage
+)

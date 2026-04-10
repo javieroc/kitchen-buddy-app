@@ -2,6 +2,10 @@ package com.connan.kitchenassistant.data.chat
 
 import com.connan.kitchenassistant.data.supabase
 import io.github.jan.supabase.auth.auth
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 
 class ChatRepository {
     private val api = RetrofitClient.chatApiService
@@ -37,5 +41,22 @@ class ChatRepository {
         val updated = chatCache.getMessages() + response.userMessage + response.assistantMessage
         chatCache.saveMessages(updated)
         return response.assistantMessage
+    }
+
+    suspend fun sendVoiceMessage(threadId: String, audioFile: File): SendMessageResponse {
+        val requestBody = audioFile.asRequestBody("audio/mp4".toMediaType())
+        val audioPart = MultipartBody.Part.createFormData("audio", audioFile.name, requestBody)
+        val response = api.sendVoiceMessage(
+            token = bearerToken(),
+            chatId = threadId,
+            audio = audioPart
+        )
+        val updated = chatCache.getMessages() + response.userMessage + response.assistantMessage
+        chatCache.saveMessages(updated)
+        return SendMessageResponse(
+            thread = response.thread,
+            userMessage = response.userMessage,
+            assistantMessage = response.assistantMessage
+        )
     }
 }

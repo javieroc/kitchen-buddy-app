@@ -1,9 +1,12 @@
 package com.connan.kitchenassistant.data.chat
 
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface ChatApiService {
@@ -31,4 +34,12 @@ interface ChatApiService {
         @Path("chat_id") chatId: String,
         @Body request: SendMessageRequest
     ): SendMessageResponse
+
+    @Multipart
+    @POST("chats/{chat_id}/messages/voice")
+    suspend fun sendVoiceMessage(
+        @Header("Authorization") token: String,
+        @Path("chat_id") chatId: String,
+        @Part audio: MultipartBody.Part
+    ): VoiceMessageResponse
 }

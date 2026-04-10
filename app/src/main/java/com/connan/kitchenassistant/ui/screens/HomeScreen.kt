@@ -1,5 +1,9 @@
 package com.connan.kitchenassistant.ui.screens
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,10 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.connan.kitchenassistant.ui.components.ChatBubble
@@ -43,20 +49,35 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val context = LocalContext.current
 
-    // With reverseLayout=true, item 0 is at the visual bottom (newest message).
-    // The list starts there naturally — no explicit "scroll to bottom" needed on init.
-    // Only emit scrollToBottom when the user sends a message while scrolled up.
+    // Permission launcher — requests RECORD_AUDIO then starts recording if granted
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) viewModel.startRecording()
+    }
+
+    val onMicTap: () -> Unit = {
+        if (uiState.isRecording) {
+            viewModel.stopRecordingAndSend()
+        } else {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                viewModel.startRecording()
+            } else {
+                micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         viewModel.scrollToBottom.collect {
             listState.animateScrollToItem(0)
         }
     }
 
-    // Load older messages when the user scrolls to the visual top (oldest visible item).
-    // hasScrolledUp guards against firing on initial render before any scroll has occurred.
     var hasScrolledUp by remember { mutableStateOf(false) }
-
     LaunchedEffect(listState.firstVisibleItemIndex) {
         if (listState.firstVisibleItemIndex > 0) hasScrolledUp = true
     }
@@ -127,7 +148,6 @@ fun HomeScreen(
                     ),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    // Declared first → appears at the visual bottom (typing indicator)
                     if (uiState.isLoading) {
                         item {
                             Box(
@@ -144,7 +164,6 @@ fun HomeScreen(
                         }
                     }
 
-                    // index 0 = newest (already reversed in ViewModel) → visual bottom with reverseLayout=true
                     items(uiState.messages, key = { it.id }) { message ->
                         ChatBubble(message = message, backdrop = backdrop)
                     }
@@ -178,6 +197,8 @@ fun HomeScreen(
                         inputText = ""
                     }
                 },
+                isRecording = uiState.isRecording,
+                onMicTap = onMicTap,
                 backdrop = backdrop
             )
         }

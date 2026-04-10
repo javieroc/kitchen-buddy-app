@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -42,7 +43,9 @@ fun GlassInputBar(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     backdrop: LayerBackdrop,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isRecording: Boolean = false,
+    onMicTap: () -> Unit = {}
 ) {
     val barShape  = ContinuousRoundedRectangle(28.dp)
     val sendShape = ContinuousRoundedRectangle(20.dp)
@@ -53,6 +56,13 @@ fun GlassInputBar(
             Color(0xFF1FB4FF).copy(alpha = 0.70f)
         )
     )
+    val recordingGradient = Brush.horizontalGradient(
+        colors = listOf(
+            Color(0xFFCC2222).copy(alpha = 0.75f),
+            Color(0xFFFF4444).copy(alpha = 0.80f)
+        )
+    )
+
     val sendInteraction = remember { MutableInteractionSource() }
 
     Box(
@@ -88,14 +98,16 @@ fun GlassInputBar(
                 onValueChange = onValueChange,
                 modifier = Modifier.weight(1f),
                 singleLine = true,
+                enabled = !isRecording,
                 textStyle = TextStyle(color = Color.White, fontSize = 15.sp),
                 cursorBrush = SolidColor(Color.White),
                 decorationBox = { innerTextField ->
                     Box {
                         if (value.isEmpty()) {
                             Text(
-                                text = "Ask kitchen Buddy...",
-                                color = Color.White.copy(alpha = 0.50f),
+                                text = if (isRecording) "Recording…" else "Ask kitchen Buddy...",
+                                color = if (isRecording) Color(0xFFFF6B6B).copy(alpha = 0.80f)
+                                        else Color.White.copy(alpha = 0.50f),
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -116,7 +128,7 @@ fun GlassInputBar(
                         shape = { sendShape },
                         effects = { blur(6.dp.toPx()); vibrancy() },
                         onDrawSurface = {
-                            drawRect(brush = sendGradient)
+                            drawRect(brush = if (isRecording) recordingGradient else sendGradient)
                             drawRect(
                                 color = Color.White.copy(alpha = 0.40f),
                                 style = Stroke(width = 1.dp.toPx())
@@ -126,11 +138,25 @@ fun GlassInputBar(
                     .clickable(
                         interactionSource = sendInteraction,
                         indication = ripple(bounded = true, color = Color.White)
-                    ) { if (value.isNotBlank()) onSend() }
+                    ) {
+                        when {
+                            isRecording      -> onMicTap()
+                            value.isNotBlank() -> onSend()
+                            else             -> onMicTap()
+                        }
+                    }
             ) {
                 Icon(
-                    imageVector = if (value.isBlank()) Icons.Outlined.Mic else Icons.Default.Send,
-                    contentDescription = if (value.isBlank()) "Voice input" else "Send",
+                    imageVector = when {
+                        isRecording      -> Icons.Filled.Stop
+                        value.isNotBlank() -> Icons.Default.Send
+                        else             -> Icons.Outlined.Mic
+                    },
+                    contentDescription = when {
+                        isRecording      -> "Stop recording"
+                        value.isNotBlank() -> "Send"
+                        else             -> "Voice input"
+                    },
                     tint = Color.White,
                     modifier = Modifier.size(18.dp)
                 )
