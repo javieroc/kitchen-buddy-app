@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -219,9 +220,17 @@ private fun RecipeCard(
                     text = item.recipe.description,
                     color = Color.White.copy(alpha = 0.75f),
                     fontSize = 13.sp,
-                    lineHeight = 18.sp
+                    lineHeight = 18.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Text(
+                text = "Yields ${item.recipe.yieldAmount} ${item.recipe.yieldUnit}",
+                color = Color.White.copy(alpha = 0.45f),
+                fontSize = 11.sp
+            )
 
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),

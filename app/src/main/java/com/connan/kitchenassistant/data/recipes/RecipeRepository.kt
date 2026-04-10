@@ -13,8 +13,7 @@ class RecipeRepository {
         return "Bearer $token"
     }
 
-    suspend fun listRecipes(): RecipesPageDto {
-        val items = api.listRecipes(bearerToken())
-        return RecipesPageDto(items = items, hasMore = false, nextCursor = null)
+    suspend fun listRecipes(cursor: String? = null, limit: Int = 20): RecipesPageDto {
+        return api.listRecipes(bearerToken(), limit = limit, cursor = cursor)
     }
 }

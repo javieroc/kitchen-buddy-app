@@ -121,6 +121,24 @@ fun RecipeDetailScreen(
                     lineHeight = 20.sp
                 )
             }
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "YIELD",
+                    color = Color(0xFF1FB4FF).copy(alpha = 0.85f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+                Text(
+                    text = "${recipe.yieldAmount} ${recipe.yieldUnit}",
+                    color = Color.White.copy(alpha = 0.75f),
+                    fontSize = 13.sp
+                )
+            }
         }
 
         // Ingredients section

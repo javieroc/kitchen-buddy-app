@@ -37,7 +37,7 @@ class RecipesViewModel(
                 val page = repository.listRecipes()
                 _uiState.update {
                     it.copy(
-                        recipes = page.items,
+                        recipes = page.recipes,
                         hasMore = page.hasMore,
                         nextCursor = page.nextCursor,
                         isLoading = false
@@ -55,10 +55,10 @@ class RecipesViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMore = true) }
             try {
-                val page = repository.listRecipes()
+                val page = repository.listRecipes(cursor = state.nextCursor)
                 _uiState.update {
                     it.copy(
-                        recipes = it.recipes + page.items,
+                        recipes = it.recipes + page.recipes,
                         hasMore = page.hasMore,
                         nextCursor = page.nextCursor,
                         isLoadingMore = false
