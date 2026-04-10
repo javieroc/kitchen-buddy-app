@@ -40,19 +40,22 @@ import com.kyant.capsule.ContinuousRoundedRectangle
 
 private data class ToolItem(
     val label: String,
-    val description: String,
-    val icon: ImageVector
-)
-
-private val tools = listOf(
-    ToolItem("Convert",  "Measurements",  Icons.Outlined.Calculate),
-    ToolItem("Calories", "Snap & Analyse", Icons.Outlined.Whatshot),
-    ToolItem("Stock",    "My Pantry",      Icons.Outlined.Inventory),
-    ToolItem("Inspire",  "Random Recipe",  Icons.Outlined.Help),
+    val icon: ImageVector,
+    val onClick: () -> Unit
 )
 
 @Composable
-fun ToolsScreen(backdrop: LayerBackdrop) {
+fun ToolsScreen(
+    backdrop: LayerBackdrop,
+    onNavigateToConverter: () -> Unit = {}
+) {
+    val tools = listOf(
+        ToolItem("Convert",  Icons.Outlined.Calculate, onNavigateToConverter),
+        ToolItem("Calories", Icons.Outlined.Whatshot,  {}),
+        ToolItem("Stock",    Icons.Outlined.Inventory, {}),
+        ToolItem("Inspire",  Icons.Outlined.Help,      {}),
+    )
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -128,12 +131,12 @@ private fun ToolButton(
             .clickable(
                 interactionSource = interactionSource,
                 indication = ripple(bounded = true, color = Color.White)
-            ) { /* TODO */ },
+            ) { tool.onClick() },
         contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Icon(
                 imageVector = tool.icon,
@@ -141,24 +144,13 @@ private fun ToolButton(
                 tint = Color.White,
                 modifier = Modifier.size(32.dp)
             )
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                Text(
-                    text = tool.label,
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    text = tool.description,
-                    color = Color.White.copy(alpha = 0.65f),
-                    fontSize = 11.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
+            Text(
+                text = tool.label,
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

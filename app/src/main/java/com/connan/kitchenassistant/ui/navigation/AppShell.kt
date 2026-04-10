@@ -54,6 +54,7 @@ fun AppShell() {
 
     val title = when {
         isDetailScreen -> navBackStackEntry?.toRoute<AppRoute.RecipeDetail>()?.recipeName ?: "Recipe"
+        navBackStackEntry?.destination?.hasRoute(AppRoute.Converter::class) == true -> "Converter"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Recipes::class) == true -> "Recipes"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Tools::class) == true -> "Tools"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Settings::class) == true -> "Settings"

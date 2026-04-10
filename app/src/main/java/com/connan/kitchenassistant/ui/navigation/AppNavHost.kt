@@ -17,6 +17,7 @@ import com.connan.kitchenassistant.ui.screens.RecipeDetailScreen
 import com.connan.kitchenassistant.ui.screens.RecipesScreen
 import com.connan.kitchenassistant.ui.screens.RecipesViewModel
 import com.connan.kitchenassistant.ui.screens.SettingsScreen
+import com.connan.kitchenassistant.ui.screens.ConverterScreen
 import com.connan.kitchenassistant.ui.screens.ToolsScreen
 import com.kyant.backdrop.backdrops.LayerBackdrop
 
@@ -66,7 +67,13 @@ fun AppNavHost(
             }
         }
         composable<AppRoute.Tools> {
-            ToolsScreen(backdrop = backdrop)
+            ToolsScreen(
+                backdrop = backdrop,
+                onNavigateToConverter = { navController.navigate(AppRoute.Converter) }
+            )
+        }
+        composable<AppRoute.Converter> {
+            ConverterScreen(backdrop = backdrop)
         }
         composable<AppRoute.Settings> {
             SettingsScreen()

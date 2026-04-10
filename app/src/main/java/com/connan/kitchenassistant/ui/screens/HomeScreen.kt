@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -91,7 +92,8 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 32.dp),
+                        .padding(horizontal = 32.dp)
+                        .padding(bottom = 88.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -120,8 +122,8 @@ fun HomeScreen(
                     contentPadding = PaddingValues(
                         start = 16.dp,
                         end = 16.dp,
-                        top = 140.dp,  // top/bottom swapped because of reverseLayout
-                        bottom = 56.dp
+                        top = 16.dp,
+                        bottom = 88.dp
                     ),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
@@ -136,7 +138,7 @@ fun HomeScreen(
                                 CircularProgressIndicator(
                                     color = Color.White.copy(alpha = 0.6f),
                                     strokeWidth = 2.dp,
-                                    modifier = Modifier.padding(8.dp)
+                                    modifier = Modifier.size(28.dp)
                                 )
                             }
                         }
