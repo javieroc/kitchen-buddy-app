@@ -56,3 +56,9 @@ data class VoiceMessageResponse(
     @SerializedName("user_message") val userMessage: ApiChatMessage,
     @SerializedName("assistant_message") val assistantMessage: ApiChatMessage
 )
+
+data class ChatMessagesPage(
+    @SerializedName("messages") val messages: List<ApiChatMessage>,
+    @SerializedName("has_more") val hasMore: Boolean,
+    @SerializedName("next_cursor") val nextCursor: Int?
+)

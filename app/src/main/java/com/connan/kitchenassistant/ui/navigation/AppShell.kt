@@ -38,8 +38,6 @@ fun AppShell() {
 
     val canNavigateBack = !isTopLevelDestination && navController.previousBackStackEntry != null
 
-    val isDetailScreen = navBackStackEntry?.destination?.hasRoute(AppRoute.RecipeDetail::class) == true
-
     val buddyName = remember {
         listOf(
             "Mr. Burrito",
@@ -53,11 +51,15 @@ fun AppShell() {
     }
 
     val title = when {
-        isDetailScreen -> navBackStackEntry?.toRoute<AppRoute.RecipeDetail>()?.recipeName ?: "Recipe"
+        navBackStackEntry?.destination?.hasRoute(AppRoute.ChatDetail::class) == true ->
+            navBackStackEntry?.toRoute<AppRoute.ChatDetail>()?.chatTitle ?: "Chat"
+        navBackStackEntry?.destination?.hasRoute(AppRoute.RecipeDetail::class) == true ->
+            navBackStackEntry?.toRoute<AppRoute.RecipeDetail>()?.recipeName ?: "Recipe"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Converter::class) == true -> "Converter"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Recipes::class) == true -> "Recipes"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Tools::class) == true -> "Tools"
         navBackStackEntry?.destination?.hasRoute(AppRoute.Settings::class) == true -> "Settings"
+        navBackStackEntry?.destination?.hasRoute(AppRoute.Chat::class) == true -> "Conversations"
         else -> buddyName
     }
 

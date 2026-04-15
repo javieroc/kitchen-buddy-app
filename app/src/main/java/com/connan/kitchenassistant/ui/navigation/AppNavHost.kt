@@ -3,16 +3,22 @@ package com.connan.kitchenassistant.ui.navigation
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
+import com.connan.kitchenassistant.ui.screens.ConversationsScreen
+import com.connan.kitchenassistant.ui.screens.ConversationsViewModel
 import com.connan.kitchenassistant.ui.screens.HomeScreen
+import com.connan.kitchenassistant.ui.screens.HomeViewModel
 import com.connan.kitchenassistant.ui.screens.RecipeDetailScreen
 import com.connan.kitchenassistant.ui.screens.RecipesScreen
 import com.connan.kitchenassistant.ui.screens.RecipesViewModel
@@ -36,8 +42,32 @@ fun AppNavHost(
         popEnterTransition = { EnterTransition.None },
         popExitTransition = { ExitTransition.None }
     ) {
-        composable<AppRoute.Chat> {
-            HomeScreen(backdrop = backdrop)
+        composable<AppRoute.Chat> { entry ->
+            val conversationsViewModel: ConversationsViewModel = viewModel(entry)
+
+            // Refresh the list every time this screen resumes (e.g. back from a chat)
+            LaunchedEffect(entry) {
+                entry.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                    conversationsViewModel.loadThreads()
+                }
+            }
+
+            ConversationsScreen(
+                backdrop = backdrop,
+                viewModel = conversationsViewModel,
+                onNavigateToChat = { thread ->
+                    navController.navigate(
+                        AppRoute.ChatDetail(
+                            chatId = thread.id,
+                            chatTitle = thread.title ?: "Chat"
+                        )
+                    )
+                }
+            )
+        }
+        composable<AppRoute.ChatDetail> { entry ->
+            val chatViewModel: HomeViewModel = viewModel(entry)
+            HomeScreen(backdrop = backdrop, viewModel = chatViewModel)
         }
         composable<AppRoute.Recipes> { entry ->
             val viewModel: RecipesViewModel = viewModel(entry)

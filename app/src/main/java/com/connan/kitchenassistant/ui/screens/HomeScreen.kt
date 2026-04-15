@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.connan.kitchenassistant.ui.components.ChatBubble
 import com.connan.kitchenassistant.ui.components.GlassInputBar
 import com.kyant.backdrop.backdrops.LayerBackdrop
@@ -44,7 +43,7 @@ import com.kyant.backdrop.backdrops.LayerBackdrop
 @Composable
 fun HomeScreen(
     backdrop: LayerBackdrop,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var inputText by remember { mutableStateOf("") }

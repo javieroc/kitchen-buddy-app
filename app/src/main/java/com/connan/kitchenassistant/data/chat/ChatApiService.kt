@@ -8,6 +8,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ChatApiService {
 
@@ -27,6 +28,14 @@ interface ChatApiService {
         @Header("Authorization") token: String,
         @Path("chat_id") chatId: String
     ): ChatThreadWithMessages
+
+    @GET("chats/{chat_id}/messages")
+    suspend fun getMessages(
+        @Header("Authorization") token: String,
+        @Path("chat_id") chatId: String,
+        @Query("limit") limit: Int = 50,
+        @Query("before") before: Int? = null
+    ): ChatMessagesPage
 
     @POST("chats/{chat_id}/messages")
     suspend fun sendThreadMessage(

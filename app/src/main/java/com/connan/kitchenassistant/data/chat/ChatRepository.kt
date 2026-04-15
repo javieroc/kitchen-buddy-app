@@ -26,6 +26,24 @@ class ChatRepository {
         return thread.id
     }
 
+    suspend fun listAllThreads(): List<ChatThread> {
+        return api.listThreads(bearerToken())
+    }
+
+    suspend fun createNewThread(): ChatThread {
+        return api.createThread(bearerToken(), CreateChatRequest())
+    }
+
+    suspend fun loadMessages(threadId: String): List<ApiChatMessage> {
+        val page = api.getMessages(bearerToken(), threadId)
+        return page.messages
+    }
+
+    suspend fun loadMessagesBefore(threadId: String, before: Int): List<ApiChatMessage> {
+        val page = api.getMessages(bearerToken(), threadId, before = before)
+        return page.messages
+    }
+
     suspend fun loadHistory(threadId: String): List<ApiChatMessage> {
         val result = api.getThread(bearerToken(), threadId)
         chatCache.saveMessages(result.messages)

@@ -3,11 +3,13 @@ package com.connan.kitchenassistant.ui.screens
 import android.app.Application
 import android.media.MediaRecorder
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.connan.kitchenassistant.data.chat.ApiChatMessage
 import com.connan.kitchenassistant.data.chat.ChatRepository
-import com.connan.kitchenassistant.data.chat.chatCache
 import com.connan.kitchenassistant.ui.components.ChatMessage
+import com.connan.kitchenassistant.ui.navigation.AppRoute
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,9 +33,13 @@ data class ChatUiState(
     val error: String? = null
 )
 
-class HomeViewModel(application: Application) : AndroidViewModel(application) {
+class HomeViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
 
     private val repository = ChatRepository()
+    private val chatId: String = savedStateHandle.toRoute<AppRoute.ChatDetail>().chatId
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -41,63 +47,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _scrollToBottom = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val scrollToBottom: SharedFlow<Unit> = _scrollToBottom.asSharedFlow()
 
-    private var threadId: String? = null
     private var allMessages: List<ChatMessage> = emptyList()
     private var shownCount = PAGE_SIZE
+    private var oldestSequenceNo: Int? = null
 
     private var mediaRecorder: MediaRecorder? = null
     private var recordingFile: File? = null
 
     init {
-        initChat()
+        loadInitialMessages()
     }
 
-    private fun initChat() {
+    private fun loadInitialMessages() {
         viewModelScope.launch {
-            val cachedId = chatCache.threadId
-            val cachedMessages = chatCache.getMessages()
-
-            if (cachedId != null && cachedMessages.isNotEmpty()) {
-                threadId = cachedId
-                allMessages = cachedMessages.map { it.toUiMessage() }
+            try {
+                val msgs = repository.loadMessages(chatId)
+                allMessages = msgs.map { it.toUiMessage() }
+                oldestSequenceNo = msgs.firstOrNull()?.sequenceNo
                 shownCount = minOf(PAGE_SIZE, allMessages.size)
                 refreshDisplayed()
                 _uiState.update { it.copy(isInitializing = false) }
-                refreshFromNetwork(cachedId)
-            } else {
-                try {
-                    val id = repository.getOrCreateThreadId()
-                    threadId = id
-                    val msgs = repository.loadHistory(id)
-                    allMessages = msgs.map { it.toUiMessage() }
-                    shownCount = minOf(PAGE_SIZE, allMessages.size)
-                    refreshDisplayed()
-                    _uiState.update { it.copy(isInitializing = false) }
-                } catch (e: Exception) {
-                    _uiState.update { it.copy(isInitializing = false, error = "Could not load conversation.") }
-                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isInitializing = false, error = "Could not load conversation.") }
             }
         }
-    }
-
-    private suspend fun refreshFromNetwork(id: String) {
-        try {
-            val fresh = repository.loadHistory(id)
-            val freshMapped = fresh.map { it.toUiMessage() }
-            when {
-                freshMapped.size > allMessages.size -> {
-                    val delta = freshMapped.size - allMessages.size
-                    allMessages = freshMapped
-                    shownCount += delta
-                    refreshDisplayed()
-                }
-                freshMapped.size < allMessages.size -> {
-                    allMessages = freshMapped
-                    shownCount = minOf(shownCount, allMessages.size)
-                    refreshDisplayed()
-                }
-            }
-        } catch (_: Exception) {}
     }
 
     fun loadMore() {
@@ -119,7 +92,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     fun sendMessage(text: String) {
         if (text.isBlank()) return
-        val currentThreadId = threadId ?: return
 
         val userMsg = ChatMessage(id = UUID.randomUUID().toString(), text = text, isFromUser = true)
         allMessages = allMessages + userMsg
@@ -130,7 +102,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                val apiReply = repository.sendThreadMessage(currentThreadId, text)
+                val apiReply = repository.sendThreadMessage(chatId, text)
                 allMessages = allMessages + apiReply.toUiMessage()
                 shownCount++
                 refreshDisplayed()
@@ -185,18 +157,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         recordingFile = null
 
-        val currentThreadId = threadId ?: run {
-            _uiState.update { it.copy(isRecording = false) }
-            file.delete()
-            return
-        }
-
         _uiState.update { it.copy(isRecording = false, isLoading = true, error = null) }
         _scrollToBottom.tryEmit(Unit)
 
         viewModelScope.launch {
             try {
-                val response = repository.sendVoiceMessage(currentThreadId, file)
+                val response = repository.sendVoiceMessage(chatId, file)
                 allMessages = allMessages + response.userMessage.toUiMessage() + response.assistantMessage.toUiMessage()
                 shownCount += 2
                 refreshDisplayed()
